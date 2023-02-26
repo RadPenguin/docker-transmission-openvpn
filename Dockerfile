@@ -21,16 +21,28 @@ FROM ubuntu:22.04
 VOLUME /data
 VOLUME /config
 
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TRANSMISSION_BRANCH=4.0.1
+
+RUN apt-get update -qq && apt-get install -yqq git build-essential automake autoconf cmake libtool pkg-config intltool libcurl4-openssl-dev libglib2.0-dev libevent-dev libminiupnpc-dev libgtk-3-dev libappindicator3-dev libssl-dev && \
+    git clone -b $TRANSMISSION_BRANCH --recurse-submodules https://github.com/transmission/transmission /opt/transmission && \
+    cd /opt/transmission && \
+    git submodule update --init --recursive && \
+    mkdir build
+RUN cd /opt/transmission/build && \
+    cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..  && \
+    make  && \
+    make install
+
 COPY --from=TransmissionUIs /opt/transmission-ui /opt/transmission-ui
 
-ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
-    dumb-init openvpn transmission-daemon transmission-cli privoxy \
+    dumb-init openvpn privoxy \
     tzdata dnsutils iputils-ping ufw openssh-client git jq curl wget unrar unzip bc \
-    && ln -s /usr/share/transmission/web/style /opt/transmission-ui/transmission-web-control \
-    && ln -s /usr/share/transmission/web/images /opt/transmission-ui/transmission-web-control \
-    && ln -s /usr/share/transmission/web/javascript /opt/transmission-ui/transmission-web-control \
-    && ln -s /usr/share/transmission/web/index.html /opt/transmission-ui/transmission-web-control/index.original.html \
+    && ln -s /opt/transmission/web/style /opt/transmission-ui/transmission-web-control \
+    && ln -s /opt/transmission/web/images /opt/transmission-ui/transmission-web-control \
+    && ln -s /opt/transmission/web/javascript /opt/transmission-ui/transmission-web-control \
+    && ln -s /opt/transmission/web/index.html /opt/transmission-ui/transmission-web-control/index.original.html \
     && rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/* \
     && groupmod -g 1000 users \
     && useradd -u 911 -U -d /config -s /bin/false abc \
