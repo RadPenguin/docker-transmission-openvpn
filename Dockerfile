@@ -85,6 +85,9 @@ ENV OPENVPN_USERNAME=**None** \
     HEALTH_CHECK_HOST=google.com \
     SELFHEAL=false
 
+# Install runtime dependencies.
+RUN apt-get update -qq && apt-get install -yqq unrar
+
 HEALTHCHECK --interval=1m CMD /etc/scripts/healthcheck.sh
 
 # Pass revision as a build arg, set it as env var
