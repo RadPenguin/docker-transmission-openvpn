@@ -1,6 +1,6 @@
 #!/bin/bash
 
-REPO_NAME=radpenguin/transmission-openvpn
+REPO_NAME=taeram/transmission-openvpn
 scriptStartTime=$( date +%s )
 
 set -e -u
