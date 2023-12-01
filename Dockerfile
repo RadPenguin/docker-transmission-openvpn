@@ -49,10 +49,10 @@ VOLUME /data
 VOLUME /config
 
 ARG DEBIAN_FRONTEND=noninteractive
-ENV TRANSMISSION_BRANCH=4.0.1
+ARG TRANSMISSION_VERSION
 
 RUN apt-get update -qq && apt-get install -yqq git build-essential automake autoconf cmake libtool pkg-config intltool libcurl4-openssl-dev libglib2.0-dev libevent-dev libminiupnpc-dev libgtk-3-dev libappindicator3-dev libssl-dev && \
-    git clone -b $TRANSMISSION_BRANCH --recurse-submodules https://github.com/transmission/transmission /opt/transmission && \
+    git clone -b $TRANSMISSION_VERSION --recurse-submodules https://github.com/transmission/transmission /opt/transmission && \
     cd /opt/transmission && \
     git submodule update --init --recursive && \
     mkdir build
@@ -71,6 +71,7 @@ RUN apt-get update && apt-get install -y \
     && ln -s /opt/transmission/web/images /opt/transmission-ui/transmission-web-control \
     && ln -s /opt/transmission/web/javascript /opt/transmission-ui/transmission-web-control \
     && ln -s /opt/transmission/web/index.html /opt/transmission-ui/transmission-web-control/index.original.html \
+    && ln -s /opt/transmission/public_html/transmission-app.js /opt/transmission-ui/transmission-web-control/transmission-app.js \
     && rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/* \
     && groupmod -g 1000 users \
     && useradd -u 911 -U -d /config -s /bin/false abc \
