@@ -122,6 +122,8 @@ Compose sample:
              - /volume1/docker/ipvanish/:/etc/openvpn/custom/
 ```
 **Declare the Custom provider, the target server and login/password**
+Also important to note here is that `OPENVPN_CONFIG` value needs to be the name of the ovpn file wanting to be referenced in the `/etc/openvpn/custom` volume. In the example below the ovpn file name is `ipvanish-UK-Maidenhead-lhr-c02.ovpn` 
+
 Compose sample:
 ```
             - OPENVPN_PROVIDER=custom
@@ -129,13 +131,20 @@ Compose sample:
             - OPENVPN_USERNAME=user
             - OPENVPN_PASSWORD=pass
 ```
-
-### If you only need to mount one file
-
-You might not need to mount a folder of configs. You may just have one config file you want to use.
-In that case, you can just mount it directly. Mounting it as `default.ovpn` will let you omit `OPENVPN_CONFIG` as well.
-
-Compose sample:
+Docker ENV vars sample: 
 ```
-             - /volume1/docker/ipvanish/my-preferred-config-file.ovpn:/etc/openvpn/custom/default.ovpn
+              -e OPENVPN_PROVIDER=custom \
+              -e OPENVPN_CONFIG=ipvanish-UK-Maidenhead-lhr-c02 \
+              -e OPENVPN_USERNAME=user \
+              -e OPENVPN_PASSWORD=pass \
 ```
+
+### Do not mount single config file
+
+Do not mount a single config directly. The container will fail if you try, since it causes sed errors when modify-openvpn-config.sh is executed.
+Instead mount the directory where the config exists.
+
+```bash
+sed: cannot rename /etc/openvpn/custom/sedHeF3gS: Device or resource busy
+```
+

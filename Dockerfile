@@ -1,4 +1,4 @@
-FROM alpine:3.13 as TransmissionUIs
+FROM alpine:latest as TransmissionUIs
 
 RUN apk --no-cache add curl jq \
     && mkdir -p /opt/transmission-ui \
@@ -14,9 +14,36 @@ RUN apk --no-cache add curl jq \
     && mv /opt/transmission-ui/kettu-master /opt/transmission-ui/kettu \
     && echo "Install Transmission-Web-Control" \
     && mkdir /opt/transmission-ui/transmission-web-control \
-    && curl -sL $(curl -s https://api.github.com/repos/ronggang/transmission-web-control/releases/latest | jq --raw-output '.tarball_url') | tar -C /opt/transmission-ui/transmission-web-control/ --strip-components=2 -xz
+    && curl -sL $(curl -s https://api.github.com/repos/ronggang/transmission-web-control/releases/latest | jq --raw-output '.tarball_url') | tar -C /opt/transmission-ui/transmission-web-control/ --strip-components=2 -xz \
+    && echo "Install Transmissionic" \
+    && wget -qO- https://github.com/6c65726f79/Transmissionic/releases/download/v1.8.0/Transmissionic-webui-v1.8.0.zip | unzip -q - \
+    && mv web /opt/transmission-ui/transmissionic
 
-FROM ubuntu:22.04
+
+FROM ubuntu:22.04 AS base
+
+RUN set -ex; \
+    apt-get update; \
+    apt-get dist-upgrade -y; \
+    apt-get install -y --no-install-recommends \
+      tzdata \
+      iproute2 \
+      net-tools \
+      nano \
+      ca-certificates \
+      curl \
+      libcurl4-openssl-dev \
+      libdeflate-dev \
+      libevent-dev \
+      libfmt-dev \
+      libminiupnpc-dev \
+      libnatpmp-dev \
+      libpsl-dev \
+      libssl-dev
+
+FROM haugene/transmission-builder:4.0.4 as TransmissionBuilder
+
+FROM base
 
 VOLUME /data
 VOLUME /config
@@ -35,6 +62,7 @@ RUN cd /opt/transmission/build && \
     make install
 
 COPY --from=TransmissionUIs /opt/transmission-ui /opt/transmission-ui
+COPY --from=TransmissionBuilder /var/tmp/*.deb /var/tmp/
 
 RUN apt-get update && apt-get install -y \
     dumb-init openvpn privoxy \
@@ -54,6 +82,10 @@ ADD openvpn/ /etc/openvpn/
 ADD transmission/ /etc/transmission/
 ADD scripts /etc/scripts/
 ADD privoxy/scripts /opt/privoxy/
+
+# Support legacy IPTables commands
+RUN update-alternatives --set iptables $(which iptables-legacy) && \
+    update-alternatives --set ip6tables $(which ip6tables-legacy)
 
 ENV OPENVPN_USERNAME=**None** \
     OPENVPN_PASSWORD=**None** \
